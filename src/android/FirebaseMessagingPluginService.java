@@ -90,14 +90,24 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
         if (FirebaseMessagingPlugin.isForceShow()) {
             RemoteMessage.Notification notification = remoteMessage.getNotification();
 
-            if (remoteMessage.getData() != null) {
-                this.sendNotification(remoteMessage.getData());
-                return;
-            }
-
             if (notification != null) {
                 showAlert(notification);
             }
+        }
+
+        if (remoteMessage.getData() != null) {
+            Map<String, String> messageData= remoteMessage.getData();
+            if (!messageData.containsKey("type") ||!messageData.containsKey("title")
+                    ||!messageData.containsKey("body") )
+            {
+                return;
+            }
+
+            if(!messageData.containsKey("dlink")) {
+                messageData.put("dlink", "https://www.teamkaro.com");
+            }
+
+            this.sendNotification(messageData);
         }
     }
 
