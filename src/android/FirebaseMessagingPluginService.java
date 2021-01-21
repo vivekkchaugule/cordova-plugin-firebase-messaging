@@ -2,10 +2,14 @@ package by.chemerisuk.cordova.firebase;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -18,6 +22,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import java.util.Map;
 
 import static android.content.ContentResolver.SCHEME_ANDROID_RESOURCE;
 
@@ -83,10 +89,65 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
 
         if (FirebaseMessagingPlugin.isForceShow()) {
             RemoteMessage.Notification notification = remoteMessage.getNotification();
+
             if (notification != null) {
                 showAlert(notification);
             }
         }
+
+        if (remoteMessage.getData() != null) {
+            Map<String, String> messageData= remoteMessage.getData();
+            if (!messageData.containsKey("type") ||!messageData.containsKey("title")
+                    ||!messageData.containsKey("body") )
+            {
+                return;
+            }
+
+            if(!messageData.containsKey("dlink")) {
+                messageData.put("dlink", "https://www.teamkaro.com");
+            }
+
+            this.sendNotification(messageData);
+        }
+    }
+
+    private void sendNotification(Map<String, String> messageData)
+    {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(messageData.get("dlink")));
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
+                PendingIntent.FLAG_ONE_SHOT);
+        String channelId = "yayshop-seller";
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, channelId)
+                        .setSmallIcon(defaultNotificationIcon)
+                        .setContentTitle(messageData.get("title"))
+                        .setContentText(messageData.get("body"))
+                        .setAutoCancel(true)
+                        .setSound(defaultSoundUri)
+                        .setPriority(NotificationCompat.PRIORITY_MAX)
+                        .setContentIntent(pendingIntent);
+
+        if (messageData.containsKey("obody"))
+        {
+            notificationBuilder.setStyle(new NotificationCompat.BigTextStyle()
+                    .bigText(messageData.get("obody")));
+        }
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Since android Oreo notification channel is needed.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(channelId,
+                    "YAYShop Notification",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+
     }
 
     private void showAlert(RemoteMessage.Notification notification) {
