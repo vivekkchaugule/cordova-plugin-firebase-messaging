@@ -25,6 +25,8 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Map;
 
+import capacitor.android.plugins.R;
+
 import static android.content.ContentResolver.SCHEME_ANDROID_RESOURCE;
 
 
@@ -38,12 +40,14 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
     public final static String NOTIFICATION_ICON_KEY = "com.google.firebase.messaging.default_notification_icon";
     public final static String NOTIFICATION_COLOR_KEY = "com.google.firebase.messaging.default_notification_color";
     public final static String NOTIFICATION_CHANNEL_KEY = "com.google.firebase.messaging.default_notification_channel_id";
+    public final static String NOTIFICATION_LARGE_ICON = "com.google.firebase.messaging.large_icon";
 
     private LocalBroadcastManager broadcastManager;
     private NotificationManager notificationManager;
     private int defaultNotificationIcon;
     private int defaultNotificationColor;
     private String defaultNotificationChannel;
+    private int defaultNotificationLargeIcon;
 
     @Override
     public void onCreate() {
@@ -54,6 +58,7 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
             ApplicationInfo ai = getPackageManager().getApplicationInfo(getApplicationContext().getPackageName(), PackageManager.GET_META_DATA);
             defaultNotificationIcon = ai.metaData.getInt(NOTIFICATION_ICON_KEY, ai.icon);
             defaultNotificationChannel = ai.metaData.getString(NOTIFICATION_CHANNEL_KEY, "default");
+            defaultNotificationLargeIcon = ai.metaData.getInt(NOTIFICATION_LARGE_ICON, ai.icon);
             defaultNotificationColor = ContextCompat.getColor(this, ai.metaData.getInt(NOTIFICATION_COLOR_KEY));
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Failed to load meta-data", e);
@@ -127,7 +132,8 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
                         .setAutoCancel(true)
                         .setSound(defaultSoundUri)
                         .setPriority(NotificationCompat.PRIORITY_MAX)
-                        .setContentIntent(pendingIntent);
+                        .setContentIntent(pendingIntent)
+                        .setLargeIcon(Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), defaultNotificationLargeIcon), 128, 128, false));
 
         if (messageData.containsKey("obody"))
         {
@@ -158,6 +164,7 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
                 .setGroup(notification.getTag())
                 .setSmallIcon(defaultNotificationIcon)
                 .setColor(defaultNotificationColor)
+                .setLargeIcon(Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), defaultNotificationLargeIcon), 128, 128, false))
                 // must set priority to make sure forceShow works properly
                 .setPriority(1);
 
