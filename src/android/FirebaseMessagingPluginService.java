@@ -131,6 +131,7 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
                         .setContentText(messageData.get("body"))
                         .setAutoCancel(true)
                         .setSound(defaultSoundUri)
+                        .setColor(defaultNotificationColor)
                         .setPriority(NotificationCompat.PRIORITY_MAX)
                         .setContentIntent(pendingIntent)
                         .setLargeIcon(Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), defaultNotificationLargeIcon), 128, 128, false));
